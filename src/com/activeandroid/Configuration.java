@@ -42,6 +42,7 @@ public class Configuration {
 	private List<Class<? extends Model>> mModelClasses;
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
 	private int mCacheSize;
+	private String mBootstrapFileName;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -87,6 +88,10 @@ public class Configuration {
 		return mModelClasses != null && mModelClasses.size() > 0;
 	}
 
+	public String getBootstrapFileName() {
+		return mBootstrapFileName;
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// INNER CLASSES
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -101,9 +106,11 @@ public class Configuration {
 		private final static String AA_MODELS = "AA_MODELS";
 		private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
 		private final static String AA_SQL_PARSER = "AA_SQL_PARSER";
+		private final static String AA_BOOTSTRAP_FILE_NAME = "AA_BOOTSTRAP_FILE_NAME";
 
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
+		private static final String DEFAULT_BOOTSTRAP_FILE_NAME = "bootstrap.sql";
 		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_LEGACY;
 
 		//////////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +125,7 @@ public class Configuration {
 		private String mSqlParser;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
+		private String mBootstrapFileName;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// CONSTRUCTORS
@@ -198,6 +206,11 @@ public class Configuration {
 			return this;
 		}
 
+		public Builder setBootstrapFileName(String bootstrapFileName) {
+			mBootstrapFileName = bootstrapFileName;
+			return this;
+		}
+
 		public Configuration create() {
 			Configuration configuration = new Configuration(mContext);
 			configuration.mCacheSize = mCacheSize;
@@ -243,6 +256,12 @@ public class Configuration {
 				}
 			}
 
+			if (mBootstrapFileName != null) {
+				configuration.mBootstrapFileName = mBootstrapFileName;
+			} else {
+				configuration.mBootstrapFileName = getMetaDataBootstrapFileNameOrDefault();
+			}
+
 			return configuration;
 		}
 
@@ -277,6 +296,15 @@ public class Configuration {
 		    }
 		    return mode;
 		}
+
+		private String getMetaDataBootstrapFileNameOrDefault() {
+			final String bootstrapFileName = ReflectionUtils.getMetaData(mContext, AA_BOOTSTRAP_FILE_NAME);
+			if (bootstrapFileName == null) {
+				return DEFAULT_BOOTSTRAP_FILE_NAME;
+			}
+			return bootstrapFileName;
+		}
+
 
 		private List<Class<? extends Model>> loadModelList(String[] models) {
 			final List<Class<? extends Model>> modelClasses = new ArrayList<Class<? extends Model>>();

@@ -51,6 +51,8 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
     private final String mSqlParser;
 
+	private final String mBootstrapFileName;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -59,6 +61,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		super(configuration.getContext(), configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
 		mSqlParser = configuration.getSqlParser();
+		mBootstrapFileName = configuration.getBootstrapFileName();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -73,15 +76,13 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		executePragmas(db);
-		executeCreate(db);
-		executeMigrations(db, -1, db.getVersion());
+		executeBootstrap(db);
 		executeCreateIndex(db);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		executePragmas(db);
-		executeCreate(db);
 		executeMigrations(db, oldVersion, newVersion);
 	}
 
@@ -149,15 +150,18 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	private void executeCreate(SQLiteDatabase db) {
+	private void executeBootstrap(SQLiteDatabase db) {
 		db.beginTransaction();
 		try {
-			for (TableInfo tableInfo : Cache.getTableInfos()) {
-				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+			if (assetExists(mBootstrapFileName)) {
+				executeSqlScript(db, mBootstrapFileName);
+
+                Log.i("Successfully bootstrapped from " + mBootstrapFileName);
 			}
 			db.setTransactionSuccessful();
-		}
-		finally {
+		} catch (IOException e) {
+			Log.e("Failed to execute bootstrap script", e);
+		} finally {
 			db.endTransaction();
 		}
 	}
@@ -175,10 +179,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 						final int version = Integer.valueOf(file.replace(".sql", ""));
 
 						if (version > oldVersion && version <= newVersion) {
-							executeSqlScript(db, file);
+							executeSqlScript(db, MIGRATION_PATH + "/" + file);
 							migrationExecuted = true;
 
-							Log.i(file + " executed succesfully.");
+							Log.i(file + " executed successfully.");
 						}
 					}
 					catch (NumberFormatException e) {
@@ -203,7 +207,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	    InputStream stream = null;
 
 		try {
-		    stream = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
+		    stream = Cache.getContext().getAssets().open(file);
 
 		    if (Configuration.SQL_PARSER_DELIMITED.equalsIgnoreCase(mSqlParser)) {
 		        executeDelimitedSqlScript(db, stream);
@@ -253,5 +257,9 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
             IOUtils.closeQuietly(reader);
 
         }
+	}
+
+	private static boolean assetExists(String name) throws IOException {
+		return Arrays.asList(Cache.getContext().getAssets().list("")).contains(name);
 	}
 }
