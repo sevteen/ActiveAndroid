@@ -53,6 +53,8 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 	private final String mBootstrapFileName;
 
+	private final int mDatabaseVersion;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +64,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
 		mSqlParser = configuration.getSqlParser();
 		mBootstrapFileName = configuration.getBootstrapFileName();
+		mDatabaseVersion = configuration.getDatabaseVersion();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -77,6 +80,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		executePragmas(db);
 		executeBootstrap(db);
+		executeMigrations(db, -1, mDatabaseVersion);
 		executeCreateIndex(db);
 	}
 
