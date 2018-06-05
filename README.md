@@ -1,3 +1,11 @@
+# NOTE ABOUT THIS FORK
+
+To fix the issue described [here](https://github.com/pardom-zz/ActiveAndroid/issues/361), automated schema creation was substituted with manual bootstrapping, which works just like migration. Place initial schema in ```src/main/assets/bootstrap.sql```
+
+<strong>DISCLAIMER:</strong> this fork is not maintained by me, use at your own risk!
+
+
+
 [![Build Status](https://travis-ci.org/pardom/ActiveAndroid.png?branch=master)](https://travis-ci.org/pardom/ActiveAndroid) [![Stories in Ready](https://badge.waffle.io/pardom/ActiveAndroid.png)](http://waffle.io/pardom/ActiveAndroid)  
 # ActiveAndroid
 
